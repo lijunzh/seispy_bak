@@ -1,10 +1,29 @@
-'''Module of data visualization'''
+'''Lijun's personal toolbox for seismic processing'''
 import numpy as np
 import matplotlib.pyplot as plt
 import pyqtgraph as pg
 
-# list of content
-__all__ = ['insert_zeros', 'wiggle']
+
+def ricker(f=10, len=0.5, dt=0.002, peak_loc=0.25):
+    '''Generate ricker wavelet signal for seismic simulation:
+
+    Keyword arguments:
+    f -- (float) peak frequency in Hz (default 10)
+    len -- (float) length of signal in sec (default 0.5)
+    dt -- (float) time resolution in sec (default 0.002)
+    peak_loc -- (float) peak location in sec (default 0.25)
+
+    ------
+    Returns:
+    t -- (array) time vecotr
+    y -- (array) signal vector
+
+    '''
+
+    t = np.linspace(-peak_loc, len - peak_loc - dt, int(len / dt))
+    t_out = t + peak_loc    # time shift ricker wavelet based on peak_loc
+    y = (1 - 2 * np.pi**2 * f**2 * t**2) * np.exp(-np.pi**2 * f**2 * t**2)
+    return t_out, y
 
 
 def insert_zeros(trace, tt=None):
@@ -268,6 +287,7 @@ def wiggle(data, tt=None, xx=None, plot_type='matplotlib', options=None):
         pg.setConfigOptions(antialias=True)  # Enable antialiasing
 
         pw = pg.plot()
+
         for ntr in range(Ntr):
             trace = data[:, ntr]
             offset = xx[ntr]
@@ -296,6 +316,7 @@ def wiggle(data, tt=None, xx=None, plot_type='matplotlib', options=None):
                         pen=options['color'])
 
         pw.setRange(yRange=[0, np.max(tt)], padding=0)
+        pw.invertY(True)
 
         return pw
 
@@ -323,36 +344,3 @@ def wiggle(data, tt=None, xx=None, plot_type='matplotlib', options=None):
     rescale_data(options)
 
     return plot_data(plot_type)()
-
-
-if __name__ == '__main__':
-    from signals import ricker
-
-    t, y = ricker()
-    data = y[:, np.newaxis]
-    for i in range(1):
-        data = np.concatenate((data, y[:, np.newaxis]), axis=1)
-
-    p1 = plt.figure(1)
-    value = wiggle(data, tt=t, plot_type='matplotlib')
-    plt.ylabel('Time(sec)')
-    plt.xlabel('Trace number')
-    plt.grid()
-    # plt.show()
-
-    options = {
-        'verbose': True,
-        'shade': True,
-        'orientation': 'vertical',
-        'color': 'k',
-        'trace_spacing': None,
-        'rescale_factor': 0.2
-    }
-    pw = wiggle(data, tt=t, plot_type='pyqtgraph', options=options)
-    pw.setLabel('left', "Time", units='sec')
-    pw.setLabel('bottom', "Traces number", units='')
-    pw.showGrid(x=True, y=True)
-
-
-    from pyqtgraph.Qt import QtGui, QtCore
-    QtGui.QApplication.instance().exec_()
