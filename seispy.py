@@ -64,9 +64,9 @@ def wiggle(data, tt=None, xx=None, plot_type='matplotlib', options=None):
 
     Keyword arguments:
     data -- (2D ndarray) seismic data matrix
-    tt -- (1D ndarray) time vector 
+    tt -- (1D ndarray) time vector
     plot_type -- (string) type of plot (matplotlib or pyqtgraph)
-    options -- (dict) options for wiggle 
+    options -- (dict) options for wiggle
 
     Returns:
     fig/p -- figure handle depend on options
@@ -149,7 +149,7 @@ def wiggle(data, tt=None, xx=None, plot_type='matplotlib', options=None):
             'color': 'k',
             'symbols': '-',
             'trace_spacing': None,
-            'rescale_factor': 0.2
+            'rescale_factor': 0.1
         }
 
     def options_init_pyqtgraph():
@@ -164,7 +164,7 @@ def wiggle(data, tt=None, xx=None, plot_type='matplotlib', options=None):
             'orientation': 'vertical',
             'color': 'k',
             'trace_spacing': None,
-            'rescale_factor': 0.2
+            'rescale_factor': 0.1
         }
 
     # Initialize options dict based on specified plot type
@@ -344,3 +344,35 @@ def wiggle(data, tt=None, xx=None, plot_type='matplotlib', options=None):
     rescale_data(options)
 
     return plot_data(plot_type)()
+
+
+# def sta_lta(trace, stw, ltw):
+#     ''' STA/LTA ratio for first break detection
+
+#     Keyword arguments:
+#     trace:      Input data trace
+#     stw:        Short-time average window length
+#     ltw:        Long-time average window length
+
+#     Returns;
+#     ratio:      STA/LTA ratio curve
+#     '''
+
+#     # Input check
+#     if len(trace.shape) > 1:
+#         raise ValueError('trace is a one-dimensional array')
+#     if stw >= ltw:
+#         raise ValueError("STW needs to be less than LTW")
+
+#     ratio = np.zeros(trace.shape)
+#     for nsample in range(1, len(trace) + 1):   # for every sample point
+#         if nsample < ltw:
+#             ratio[nsample - 1] = 0
+#         else:
+#             ratio[nsample - 1] = np.mean(trace[nsample - stw:nsample]) /\
+#                 np.mean(trace[nsample - ltw:nsample])
+
+#     return ratio
+
+# if __name__ == '__main__':
+#     print(sta_lta(np.arange(10), 2, 4))
