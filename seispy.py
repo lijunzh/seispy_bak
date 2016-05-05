@@ -283,8 +283,8 @@ def mer(trace, ne):
     # Energy ratio
     er = np.zeros(Nsp)
     for nsp in range(1, Nsp + 1):
-        er[nsp - 1] = (np.sum(trace_ext[nsp - ne:nsp]**2)) /\
-            (np.sum(trace_ext[nsp:nsp + ne]**2))
+        er[nsp - 1] = np.sum(trace_ext[nsp:nsp + ne]**2) /\
+            np.sum(trace_ext[nsp - ne:nsp]**2)
 
     er3 = np.power((np.abs(trace) * er), 3)
     return er, er3
@@ -294,7 +294,7 @@ if __name__ == '__main__':
     data = np.vstack((ricker()[1], ricker()[1])).T
 
     # Test time picking methods
-    trace = ricker()[1]
+    trace = ricker(f=10, len=3, dt=0.002, peak_loc=2)[1]
     trace = trace + np.random.normal(loc=0., scale=0.3, size=trace.shape)
     plt.figure()
     plt.subplot(511)
@@ -302,26 +302,26 @@ if __name__ == '__main__':
     plt.grid()
     plt.ylabel("trace")
     plt.subplot(512)
-    plt.plot(slr(trace, 5, 30)[0])
+    plt.plot(slr(trace, 25, 150)[0])
     plt.grid()
     plt.ylabel("slr")
     plt.subplot(513)
-    plt.plot(slr(trace, 5, 30)[1])
+    plt.plot(slr(trace, 25, 150)[1])
     plt.grid()
     plt.ylabel("dslr")
     plt.subplot(514)
-    plt.plot(mer(trace, 5)[0])
+    plt.plot(mer(trace, 25)[0])
     plt.grid()
     plt.ylabel("er")
     plt.subplot(515)
-    plt.plot(mer(trace, 5)[1])
+    plt.plot(mer(trace, 25)[1])
     plt.grid()
     plt.ylabel("mer")
 
     # Test wiggle()
-    plt.figure()
-    wiggle(data)
-    plt.grid()
+    # plt.figure()
+    # wiggle(data)
+    # plt.grid()
 
     plt.show()
     # Test traces()
