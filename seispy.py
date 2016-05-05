@@ -224,7 +224,7 @@ def show():
 
 
 def slr(trace, ns, nl):
-    ''' STA/LTA ratio for first break detection
+    '''STA/LTA ratio for first break detection
 
     Keyword arguments:
     trace:      Input data trace
@@ -239,44 +239,84 @@ def slr(trace, ns, nl):
     '''
 
     # Input check
-    if len(trace.shape) > 1:
+    if type(data).__module__ != np.__name__:
+        raise TypeError("data must be a numpy array")
+    if len(trace.shape) != 1:
         raise ValueError('trace is a one-dimensional array')
     if ns >= nl:
         raise ValueError("ns needs to be less than nl")
 
-    Nsp = len(trace)    # number of sample points
-    trace = np.hstack((trace, np.mean(trace[:2]) * np.ones(nl - 1)))
+    Nsp = len(trace)    # number of sample points in trace
+    # Extend trace for ns and nl
+    trace_ext = np.hstack((trace, np.mean(trace[:2]) * np.ones(nl - 1)))
     r = np.zeros(Nsp)
     for nsp in range(1, Nsp + 1):
         # computer sta/lta ratio (index starting from 0)
-        r[nsp - 1] = (np.mean(trace[range(nsp - ns, nsp)]**2)) /\
-            (np.mean(trace[range(nsp - nl, nsp)]**2))
+        r[nsp - 1] = (np.mean(trace_ext[range(nsp - ns, nsp)]**2)) /\
+            (np.mean(trace_ext[range(nsp - nl, nsp)]**2))
     # compute the derivative of sta/lta ratio
     d = np.hstack((np.diff(r), 0))
     return r, d
 
 
-def mer(data, ne):
-    pass
+def mer(trace, ne):
+    '''Modified energy ratio for first break detection
+
+    '''
+
+    # Input check
+    if type(trace).__module__ != np.__name__:
+        raise TypeError("data must be a numpy array")
+    if len(trace.shape) != 1:
+        raise ValueError('trace is a one-dimensional array')
+    if not isinstance(ne, (int, float)):
+        raise TypeError("ne must be a number")
+    elif ne <= 0:
+        raise ValueError("ne must be a possitive number")
+    elif ne >= len(data):
+        raise ValueError("ne must be less than length of trace")
+
+    Nsp = len(trace)    # number of sample points in trace
+    # Extend trace
+    trace_ext = np.hstack((trace, np.mean(trace[:2]) * np.ones(ne - 1)))
+
+    # Energy ratio
+    er = np.zeros(Nsp)
+    for nsp in range(1, Nsp + 1):
+        er[nsp - 1] = (np.sum(trace_ext[nsp - ne:nsp]**2)) /\
+            (np.sum(trace_ext[nsp:nsp + ne]**2))
+
+    er3 = np.power((np.abs(trace) * er), 3)
+    return er, er3
 
 if __name__ == '__main__':
     # Test ricker
     data = np.vstack((ricker()[1], ricker()[1])).T
 
     # Test time picking methods
+    trace = ricker()[1]
+    trace = trace + np.random.normal(loc=0., scale=0.3, size=trace.shape)
     plt.figure()
-    plt.subplot(311)
-    plt.plot(ricker()[1])
+    plt.subplot(511)
+    plt.plot(trace)
     plt.grid()
     plt.ylabel("trace")
-    plt.subplot(312)
-    plt.plot(slr(ricker()[1], 5, 30)[0])
+    plt.subplot(512)
+    plt.plot(slr(trace, 5, 30)[0])
     plt.grid()
-    plt.ylabel("SLA/LTA ratio")
-    plt.subplot(313)
-    plt.plot(slr(ricker()[1], 5, 30)[1])
+    plt.ylabel("slr")
+    plt.subplot(513)
+    plt.plot(slr(trace, 5, 30)[1])
     plt.grid()
-    plt.ylabel("Derivative of STA/LTA ratio")
+    plt.ylabel("dslr")
+    plt.subplot(514)
+    plt.plot(mer(trace, 5)[0])
+    plt.grid()
+    plt.ylabel("er")
+    plt.subplot(515)
+    plt.plot(mer(trace, 5)[1])
+    plt.grid()
+    plt.ylabel("mer")
 
     # Test wiggle()
     plt.figure()
@@ -285,8 +325,8 @@ if __name__ == '__main__':
 
     plt.show()
     # Test traces()
-    p = traces(data)
-    p.setLabel('left', "Time", units='sec')
-    p.setLabel('bottom', "Traces number", units='')
-    p.showGrid(x=True, y=True)
-    show()
+    # p = traces(data)
+    # p.setLabel('left', "Time", units='sec')
+    # p.setLabel('bottom', "Traces number", units='')
+    # p.showGrid(x=True, y=True)
+    # show()
