@@ -2,6 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui
 
 
 def ricker(f=10, len=0.5, dt=0.002, peak_loc=0.25):
@@ -59,39 +60,11 @@ def insert_zeros(trace, tt=None):
     return trace_zi, tt_zi
 
 
-def wiggle(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
-    '''Wiggle plot of a sesimic data section
-
-    Syntax examples:
-        wiggle(data)
-        wiggle(data, tt)
-        wiggle(data, tt, xx)
-        wiggle(data, tt, xx, color)
-        fi = wiggle(data, tt, xx, color, sf, verbose)
-
-    Note that wiggle() optionally returns the figure instance. It is adviced 
-    to use the column major order for array as in Fortran to optimal 
-    performance.
-
-    The following color abbreviations are supported:
-
-    ==========  ========
-    character   color
-    ==========  ========
-    'b'         blue
-    'g'         green
-    'r'         red
-    'c'         cyan
-    'm'         magenta
-    'y'         yellow
-    'k'         black
-    'w'         white
-    ==========  ========
-
+def wiggle_input_check(data, tt, xx, sf, verbose):
+    ''' Helper function for wiggle() and traces() to check input
 
     '''
 
-    # Input check
     # Input check for verbose
     if not isinstance(verbose, bool):
         raise TypeError("verbose must be a bool")
@@ -142,6 +115,44 @@ def wiggle(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
     data_max_std = np.max(np.std(data, axis=0))
     data = data / data_max_std / ts * sf
 
+    return data, tt, xx, ts
+
+
+def wiggle(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
+    '''Wiggle plot of a sesimic data section
+
+    Syntax examples:
+        wiggle(data)
+        wiggle(data, tt)
+        wiggle(data, tt, xx)
+        wiggle(data, tt, xx, color)
+        fi = wiggle(data, tt, xx, color, sf, verbose)
+
+    Note that wiggle() optionally returns the figure instance. It is adviced 
+    to use the column major order for array as in Fortran to optimal 
+    performance.
+
+    The following color abbreviations are supported:
+
+    ==========  ========
+    character   color
+    ==========  ========
+    'b'         blue
+    'g'         green
+    'r'         red
+    'c'         cyan
+    'm'         magenta
+    'y'         yellow
+    'k'         black
+    'w'         white
+    ==========  ========
+
+
+    '''
+
+    # Input check
+    data, tt, xx, ts = wiggle_input_check(data, tt, xx, sf, verbose)
+
     # Plot data using matplotlib.pyplot
     Ntr = data.shape[1]
 
@@ -159,6 +170,59 @@ def wiggle(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
     ax.invert_yaxis()
     ax.set_xlim(xx[0] - ts, xx[-1] + ts)
 
+
+def traces(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
+    '''Plot large seismic dataset in real time using pyqtgraph
+
+    '''
+
+    # Input check
+    data, tt, xx, ts = wiggle_input_check(data, tt, xx, sf, verbose)
+
+    Ntr = data.shape[1]
+
+    pg.setConfigOption('background', 'w')
+    pg.setConfigOption('foreground', 'k')
+    pg.setConfigOptions(antialias=True)  # Enable antialiasing
+
+    p = pg.plot()
+
+    for ntr in range(Ntr):
+        trace = data[:, ntr]
+        offset = xx[ntr]
+
+        # Insert zeros
+        trace_zi, tt_zi = insert_zeros(trace, tt)
+        # Seperate top and bottom line
+        trace_top = np.array(
+            [i + offset if i >= 0 else None for i in trace_zi],
+            dtype='float64')
+        trace_line = np.array(
+            [offset if i >= 0 else None for i in trace_zi],
+            dtype='float64')
+        trace_bot = np.array(
+            [i + offset if i <= 0 else None for i in trace_zi],
+            dtype='float64')
+        # Plot top and bottom
+        top = p.plot(x=trace_top, y=tt_zi, pen=color)
+        bot = p.plot(x=trace_line, y=tt_zi, pen=color)
+        p.plot(x=trace_bot, y=tt_zi, pen=color)
+        fill = pg.FillBetweenItem(bot, top, brush=color)
+        p.addItem(fill)
+
+    p.invertY(True)
+    p.setRange(yRange=[0, np.max(tt)], padding=0)
+
+    return p
+
+
+def show():
+    '''Helper function to show pyqtgraph figres
+
+    '''
+    QtGui.QApplication.instance().exec_()
+
+
 # def sta_lta(trace, stw, ltw):
 #     ''' STA/LTA ratio for first break detection
 
@@ -167,29 +231,43 @@ def wiggle(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
 #     stw:        Short-time average window length
 #     ltw:        Long-time average window length
 
-#     Returns;
-#     ratio:      STA/LTA ratio curve
+#     Returns:
+#     r:      STA/LTA ratio curve
+#     d:      STA/LTA ratio derivative curve
+
+#     Reference: 
+#     http://www.crewes.org/ForOurSponsors/ConferenceAbstracts/2009/CSEG/Wong_CSEG_2009.pdf
 #     '''
 
-# Input check
+#     # Input check
 #     if len(trace.shape) > 1:
 #         raise ValueError('trace is a one-dimensional array')
 #     if stw >= ltw:
 #         raise ValueError("STW needs to be less than LTW")
 
-#     ratio = np.zeros(trace.shape)
-# for nsample in range(1, len(trace) + 1):   # for every sample point
-#         if nsample < ltw:
-#             ratio[nsample - 1] = 0
-#         else:
-#             ratio[nsample - 1] = np.mean(trace[nsample - stw:nsample]) /\
-#                 np.mean(trace[nsample - ltw:nsample])
-
-#     return ratio
+#     Ns = len(trace)
+#     trace = np.hstack((trace, np.mean(trace[:2]) * np.ones(ltw - 1)))
+#     r = np.zeros(Ns)
+#     for ns in range(Ns):
+#         # computer sta/lta ratio
+#         r[ns] = (np.mean(trace[range(ns - stw + 1, ns + 1)]**2)) /\
+#             (np.mean(trace[range(ns - ltw + 1, ns + 1)]**2))
+#     # compute the derivative of sta/lta ratio
+#     d = np.hstack((np.diff(r), 0))
+#     return r, d
 
 if __name__ == '__main__':
     data = np.vstack((ricker()[1], ricker()[1])).T
+    plt.figure()
     wiggle(data)
     plt.grid()
+    # plt.figure()
+    # plt.plot(sta_lta(ricker()[1], 5, 30)[0])
+    # plt.figure()
+    # plt.plot(sta_lta(ricker()[1], 5, 30)[1])
     plt.show()
-    # print(sta_lta(np.arange(10), 2, 4))
+    p = traces(data)
+    p.setLabel('left', "Time", units='sec')
+    p.setLabel('bottom', "Traces number", units='')
+    p.showGrid(x=True, y=True)
+    show()
