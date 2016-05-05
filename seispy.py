@@ -223,49 +223,68 @@ def show():
     QtGui.QApplication.instance().exec_()
 
 
-# def sta_lta(trace, stw, ltw):
-#     ''' STA/LTA ratio for first break detection
+def slr(trace, ns, nl):
+    ''' STA/LTA ratio for first break detection
 
-#     Keyword arguments:
-#     trace:      Input data trace
-#     stw:        Short-time average window length
-#     ltw:        Long-time average window length
+    Keyword arguments:
+    trace:      Input data trace
+    ns:        Short-time average window length
+    nl:        Long-time average window length
 
-#     Returns:
-#     r:      STA/LTA ratio curve
-#     d:      STA/LTA ratio derivative curve
+    Returns:
+    r:      STA/LTA ratio curve
+    d:      STA/LTA ratio derivative curve
 
-#     Reference: 
-#     http://www.crewes.org/ForOurSponsors/ConferenceAbstracts/2009/CSEG/Wong_CSEG_2009.pdf
-#     '''
+    Reference: http://www.crewes.org/ForOurSponsors/ConferenceAbstracts/2009/CSEG/Wong_CSEG_2009.pdf
+    '''
 
-#     # Input check
-#     if len(trace.shape) > 1:
-#         raise ValueError('trace is a one-dimensional array')
-#     if stw >= ltw:
-#         raise ValueError("STW needs to be less than LTW")
+    # Input check
+    if len(trace.shape) > 1:
+        raise ValueError('trace is a one-dimensional array')
+    if ns >= nl:
+        raise ValueError("ns needs to be less than nl")
 
-#     Ns = len(trace)
-#     trace = np.hstack((trace, np.mean(trace[:2]) * np.ones(ltw - 1)))
-#     r = np.zeros(Ns)
-#     for ns in range(Ns):
-#         # computer sta/lta ratio
-#         r[ns] = (np.mean(trace[range(ns - stw + 1, ns + 1)]**2)) /\
-#             (np.mean(trace[range(ns - ltw + 1, ns + 1)]**2))
-#     # compute the derivative of sta/lta ratio
-#     d = np.hstack((np.diff(r), 0))
-#     return r, d
+    Nsp = len(trace)    # number of sample points
+    trace = np.hstack((trace, np.mean(trace[:2]) * np.ones(nl - 1)))
+    r = np.zeros(Nsp)
+    for nsp in range(1, Nsp + 1):
+        # computer sta/lta ratio (index starting from 0)
+        r[nsp - 1] = (np.mean(trace[range(nsp - ns, nsp)]**2)) /\
+            (np.mean(trace[range(nsp - nl, nsp)]**2))
+    # compute the derivative of sta/lta ratio
+    d = np.hstack((np.diff(r), 0))
+    return r, d
+
+
+def mer(data, ne):
+    pass
 
 if __name__ == '__main__':
+    # Test ricker
     data = np.vstack((ricker()[1], ricker()[1])).T
+
+    # Test time picking methods
+    plt.figure()
+    plt.subplot(311)
+    plt.plot(ricker()[1])
+    plt.grid()
+    plt.ylabel("trace")
+    plt.subplot(312)
+    plt.plot(slr(ricker()[1], 5, 30)[0])
+    plt.grid()
+    plt.ylabel("SLA/LTA ratio")
+    plt.subplot(313)
+    plt.plot(slr(ricker()[1], 5, 30)[1])
+    plt.grid()
+    plt.ylabel("Derivative of STA/LTA ratio")
+
+    # Test wiggle()
     plt.figure()
     wiggle(data)
     plt.grid()
-    # plt.figure()
-    # plt.plot(sta_lta(ricker()[1], 5, 30)[0])
-    # plt.figure()
-    # plt.plot(sta_lta(ricker()[1], 5, 30)[1])
+
     plt.show()
+    # Test traces()
     p = traces(data)
     p.setLabel('left', "Time", units='sec')
     p.setLabel('bottom', "Traces number", units='')
