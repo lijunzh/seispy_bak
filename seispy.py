@@ -235,6 +235,9 @@ def slr(trace, ns, nl):
     r:      STA/LTA ratio curve
     d:      STA/LTA ratio derivative curve
 
+    Parameter selection:
+    STA(ns): 2–3 times the dominant period of the signal
+    LTA(nl): 5–10 times STA
     Reference: http://www.crewes.org/ForOurSponsors/ConferenceAbstracts/2009/CSEG/Wong_CSEG_2009.pdf
     '''
 
@@ -262,6 +265,16 @@ def slr(trace, ns, nl):
 def mer(trace, ne):
     '''Modified energy ratio for first break detection
 
+    Keyword argument:
+    trace:  Input data trace
+    ne:     energy window size
+
+    Returns:
+    er:     Energy ratio
+    er3:    Modified energy ratio 3
+
+    Parameter selection:
+    Window Size(ne): 2–3 times the dominant period of the signal
     '''
 
     # Input check
@@ -294,7 +307,7 @@ if __name__ == '__main__':
     data = np.vstack((ricker()[1], ricker()[1])).T
 
     # Test time picking methods
-    trace = ricker(f=10, len=3, dt=0.002, peak_loc=2)[1]
+    trace = ricker(f=10, len=10, dt=0.002, peak_loc=5)[1]
     trace = trace + np.random.normal(loc=0., scale=0.3, size=trace.shape)
     plt.figure()
     plt.subplot(511)
@@ -302,19 +315,19 @@ if __name__ == '__main__':
     plt.grid()
     plt.ylabel("trace")
     plt.subplot(512)
-    plt.plot(slr(trace, 25, 150)[0])
+    plt.plot(slr(trace, 150, 1000)[0])
     plt.grid()
     plt.ylabel("slr")
     plt.subplot(513)
-    plt.plot(slr(trace, 25, 150)[1])
+    plt.plot(slr(trace, 150, 1000)[1])
     plt.grid()
     plt.ylabel("dslr")
     plt.subplot(514)
-    plt.plot(mer(trace, 25)[0])
+    plt.plot(mer(trace, 100)[0])
     plt.grid()
     plt.ylabel("er")
     plt.subplot(515)
-    plt.plot(mer(trace, 25)[1])
+    plt.plot(mer(trace, 100)[1])
     plt.grid()
     plt.ylabel("mer")
 
