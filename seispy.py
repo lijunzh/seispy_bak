@@ -128,9 +128,7 @@ def wiggle(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
         wiggle(data, tt, xx, color)
         fi = wiggle(data, tt, xx, color, sf, verbose)
 
-    Note that wiggle() optionally returns the figure instance. It is adviced 
-    to use the column major order for array as in Fortran to optimal 
-    performance.
+    Use the column major order for array as in Fortran to optimal performance.
 
     The following color abbreviations are supported:
 
@@ -242,7 +240,7 @@ def slr(trace, ns, nl):
     '''
 
     # Input check
-    if type(data).__module__ != np.__name__:
+    if type(trace).__module__ != np.__name__:
         raise TypeError("data must be a numpy array")
     if len(trace.shape) != 1:
         raise ValueError('trace is a one-dimensional array')
@@ -251,12 +249,14 @@ def slr(trace, ns, nl):
 
     Nsp = len(trace)    # number of sample points in trace
     # Extend trace for ns and nl
-    trace_ext = np.hstack((trace, np.mean(trace[:2]) * np.ones(nl - 1)))
+    trace_ext = np.hstack((trace,
+                           np.mean(trace[-3:-1]) * np.ones(nl - 1),
+                           np.mean(trace[:2]) * np.ones(nl - 1)))
     r = np.zeros(Nsp)
-    for nsp in range(1, Nsp + 1):
+    for nsp in range(Nsp):
         # computer sta/lta ratio (index starting from 0)
-        r[nsp - 1] = (np.mean(trace_ext[range(nsp - ns, nsp)]**2)) /\
-            (np.mean(trace_ext[range(nsp - nl, nsp)]**2))
+        r[nsp] = (np.mean(trace_ext[range(nsp - ns + 1, nsp + 1)]**2)) /\
+            (np.mean(trace_ext[range(nsp - nl + 1, nsp + 1)]**2))
     # compute the derivative of sta/lta ratio
     d = np.hstack((np.diff(r), 0))
     return r, d
@@ -284,59 +284,193 @@ def mer(trace, ne):
         raise ValueError('trace is a one-dimensional array')
     if not isinstance(ne, (int, float)):
         raise TypeError("ne must be a number")
-    elif ne <= 0:
+    if ne <= 0:
         raise ValueError("ne must be a possitive number")
-    elif ne >= len(data):
+    if ne >= len(trace):
         raise ValueError("ne must be less than length of trace")
 
     Nsp = len(trace)    # number of sample points in trace
-    # Extend trace
-    trace_ext = np.hstack((trace, np.mean(trace[:2]) * np.ones(ne - 1)))
+    # Extend trace(both head and tail)
+    trace_ext = np.hstack((trace,
+                           np.mean(trace[-3:-1]) * np.ones(ne - 1),
+                           np.mean(trace[:2]) * np.ones(ne - 1)))
 
     # Energy ratio
     er = np.zeros(Nsp)
-    for nsp in range(1, Nsp + 1):
-        er[nsp - 1] = np.sum(trace_ext[nsp:nsp + ne]**2) /\
-            np.sum(trace_ext[nsp - ne:nsp]**2)
+    for nsp in range(Nsp):
+        er[nsp] = np.sum(trace_ext[range(nsp, nsp + ne)]**2) /\
+            np.sum(trace_ext[range(nsp - ne + 1, nsp + 1)]**2)
 
     er3 = np.power((np.abs(trace) * er), 3)
     return er, er3
 
+
+def rolling_window(a, window, step=1):
+    '''Rolling window of a
+
+    Keyword argument:
+    a:  Input 1D array
+    window: Window length
+    step:  steps in sample point
+
+    Return:
+    rolling windowed data
+
+    '''
+    shape = a.shape[:-1] + (int((a.shape[-1] - window) / step) + 1, window)
+    strides = (a.strides[-1] * step,) + (a.strides[-1],)
+    return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
+
+
+def eps(trace, ne):
+    ''' Edge-preserving smoothing
+
+    Keyword argument:
+    trace:  Input data
+    ne:     Window length
+
+    Returns:
+    trace_eps:   Edge preserved smoothed trace
+
+    Reference:
+    Luo, Y.,M.Marhoon, S. A. Dossary, andM. Alfaraj, 2002, Edge-preserving smoothing and applications: The Leading Edge, 21, 136–158.
+    '''
+
+    Nsp = len(trace)
+
+    # Extend trace
+    trace_ext = np.hstack((trace,
+                           np.mean(trace[-3:-1]) * np.ones(ne - 1),
+                           np.mean(trace[:2]) * np.ones(ne - 1)))
+
+    # Initialize output array
+    trace_eps = np.zeros(trace.shape)
+    for nsp in range(Nsp):
+        windows = rolling_window(trace_ext[range(nsp - ne + 1, nsp + ne)], ne)
+        selected_window_idx = np.argmin(np.std(windows, axis=1))
+        trace_eps[nsp] = np.mean(windows[selected_window_idx])
+
+    return trace_eps
+
+
+def mcm(trace, nl, ne, beta=0.2, mcm=True):
+    ''' Coppen's method and modified Coppen's method
+
+    '''
+
+    Nsp = len(trace)
+
+    # EPS
+    if mcm:
+        trace_eps = eps(trace, ne)
+    else:
+        trace_eps = trace
+
+    # Extend trace
+    trace_ext = np.hstack((trace_eps, np.zeros(nl - 1)))
+
+    # Coppen's method
+    mcm = np.zeros(trace.shape)
+    for nsp in range(Nsp):
+        mcm[nsp] = np.sum(trace_ext[range(nsp - nl + 1, nsp + 1)]**2) /\
+            (np.sum(trace_ext[range(nsp + 1)]**2) + beta)
+
+    return mcm
+
+
+def em():
+    '''Entropy method
+
+    '''
+    pass
+
+
+def fdm():
+    '''Fractal-dimension method
+
+    '''
+    pass
+
+
+def pai_k():
+    '''PAI-K method
+
+    '''
+    pass
+
+
+def slr_kurt():
+    '''Short-term kurtosis over long-term kurtosis ratio
+
+    '''
+    pass
+
+
+def aic():
+    '''Akaike information criterion method
+
+    '''
+    pass
+
+
 if __name__ == '__main__':
-    # Test ricker
-    data = np.vstack((ricker()[1], ricker()[1])).T
+    # Rolling window
+    print(rolling_window(np.arange(10), 3, 1))
+
+    # EPS
+    print(eps(np.arange(10), 3))
 
     # Test time picking methods
-    trace = ricker(f=10, len=10, dt=0.002, peak_loc=5)[1]
-    trace = trace + np.random.normal(loc=0., scale=0.3, size=trace.shape)
+    dt = 0.002
+    trace = ricker(f=10, len=10, dt=dt, peak_loc=5)[1]
+    trace = trace + np.random.normal(loc=0., scale=0.2, size=trace.shape)
     plt.figure()
-    plt.subplot(511)
+    plt.subplot(711)
     plt.plot(trace)
     plt.grid()
     plt.ylabel("trace")
-    plt.subplot(512)
-    plt.plot(slr(trace, 150, 1000)[0])
+
+    ns = int(1 * 0.1 / dt)
+    nl = int(10 * 0.1 / dt)
+    plt.subplot(712)
+    plt.plot(slr(trace, ns, nl)[0])
     plt.grid()
     plt.ylabel("slr")
-    plt.subplot(513)
-    plt.plot(slr(trace, 150, 1000)[1])
+    plt.subplot(713)
+    plt.plot(slr(trace, ns, nl)[1])
     plt.grid()
     plt.ylabel("dslr")
-    plt.subplot(514)
-    plt.plot(mer(trace, 100)[0])
+
+    ne = int(2 * 0.1 / dt)
+    plt.subplot(714)
+    plt.plot(mer(trace, ne)[0])
     plt.grid()
     plt.ylabel("er")
-    plt.subplot(515)
-    plt.plot(mer(trace, 100)[1])
+    plt.subplot(715)
+    plt.semilogy(mer(trace, ne)[1])
     plt.grid()
     plt.ylabel("mer")
+
+    nl = int(0.1 / dt)
+    ne = int(1.5 * 0.1 / dt)
+    plt.subplot(716)
+    plt.plot(mcm(trace, nl, ne, mcm=False))
+    plt.grid()
+    plt.ylabel("cm")
+    plt.subplot(717)
+    plt.plot(mcm(trace, nl, ne, mcm=True))
+    plt.grid()
+    plt.ylabel("mcm")
+    plt.show()
+
+    # Test ricker
+    # data = np.vstack((ricker()[1], ricker()[1])).T
 
     # Test wiggle()
     # plt.figure()
     # wiggle(data)
     # plt.grid()
 
-    plt.show()
     # Test traces()
     # p = traces(data)
     # p.setLabel('left', "Time", units='sec')
