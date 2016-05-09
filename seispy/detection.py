@@ -1,16 +1,17 @@
 '''Detection module for Lijun's seismic toolbox'''
 import numpy as np
 
-__all__ = ['slr', 'mer', 'eps', 'mcm', 'em', 'fdm', 'pai_k', 'slr_kurt', 'aic']
+__all__ = ['slr', 'er', 'eps', 'cm', 'em', 'fdm', 'pai_k', 'slr_kurt', 'aic']
 
 
-def slr(trace, ns, nl):
+def slr(trace, ns, nl, derivative=False):
     '''STA/LTA ratio for first break detection
 
     Keyword arguments:
     trace:      Input data trace
-    ns:        Short-time average window length
-    nl:        Long-time average window length
+    ns:         Short-time average window length
+    nl:         Long-time average window length
+    derivative: output slr or derivative of slr
 
     Returns:
     r:      STA/LTA ratio curve
@@ -41,16 +42,20 @@ def slr(trace, ns, nl):
         r[nsp] = (np.mean(trace_ext[range(nsp - ns + 1, nsp + 1)]**2)) /\
             (np.mean(trace_ext[range(nsp - nl + 1, nsp + 1)]**2))
     # compute the derivative of sta/lta ratio
-    d = np.hstack((np.diff(r), 0))
-    return r, d
+    if derivative:
+        d = np.hstack((np.diff(r), 0))
+        return d
+    else:
+        return r
 
 
-def mer(trace, ne):
+def er(trace, ne, mer=False):
     '''Modified energy ratio for first break detection
 
     Keyword argument:
     trace:  Input data trace
     ne:     energy window size
+    mer:    output er or mer
 
     Returns:
     er:     Energy ratio
@@ -84,8 +89,11 @@ def mer(trace, ne):
         er[nsp] = np.sum(trace_ext[range(nsp, nsp + ne)]**2) /\
             np.sum(trace_ext[range(nsp - ne + 1, nsp + 1)]**2)
 
-    er3 = np.power((np.abs(trace) * er), 3)
-    return er, er3
+    if mer:
+        er3 = np.power((np.abs(trace) * er), 3)
+        return er3
+    else:
+        return er
 
 
 def rolling_window(a, window, step=1):
@@ -136,7 +144,7 @@ def eps(trace, ne):
     return trace_eps
 
 
-def mcm(trace, nl, ne, beta=0.2, mcm=True):
+def cm(trace, nl, ne, beta=0.2, mcm=True):
     ''' Coppen's method and modified Coppen's method
 
     '''
