@@ -1,16 +1,18 @@
 '''Detection module for Lijun's seismic toolbox'''
 import numpy as np
+import numba
 
 __all__ = ['slr', 'er', 'eps', 'cm', 'em', 'fdm', 'pai_k', 'slr_kurt', 'aic']
 
 
-def slr(trace, ns, nl, derivative=False):
+@numba.jit(nopython=True)
+def slr(trace, Ns, Nl):
     '''STA/LTA ratio for first break detection
 
     Keyword arguments:
     trace:      Input data trace
-    ns:         Short-time average window length
-    nl:         Long-time average window length
+    Ns:         Short-time average window length
+    Nl:         Long-time average window length
     derivative: output slr or derivative of slr
 
     Returns:
@@ -24,29 +26,34 @@ def slr(trace, ns, nl, derivative=False):
     '''
 
     # Input check
-    if type(trace).__module__ != np.__name__:
-        raise TypeError("data must be a numpy array")
-    if len(trace.shape) != 1:
-        raise ValueError('trace is a one-dimensional array')
-    if ns >= nl:
-        raise ValueError("ns needs to be less than nl")
+    # if type(trace).__module__ != np.__name__:
+    #     raise TypeError("data must be a numpy array")
+    # if len(trace.shape) != 1:
+    #     raise ValueError('trace is a one-dimensional array')
+    # if Ns >= Nl:
+    #     raise ValueError("ns needs to be less than nl")
 
-    Nsp = len(trace)    # number of sample points in trace
-    # Extend trace for ns and nl
-    trace_ext = np.hstack((trace,
-                           np.mean(trace[-3:-1]) * np.ones(nl - 1),
-                           np.mean(trace[:2]) * np.ones(nl - 1)))
-    r = np.zeros(Nsp)
+    Nsp = len(trace)
+
+    initial_value = (trace[0] + trace[1]) / 2
+    ratio = np.zeros(Nsp)
     for nsp in range(Nsp):
-        # computer sta/lta ratio (index starting from 0)
-        r[nsp] = (np.mean(trace_ext[range(nsp - ns + 1, nsp + 1)]**2)) /\
-            (np.mean(trace_ext[range(nsp - nl + 1, nsp + 1)]**2))
-    # compute the derivative of sta/lta ratio
-    if derivative:
-        d = np.hstack((np.diff(r), 0))
-        return d
-    else:
-        return r
+        STA = 0
+        for ns in range(nsp - Ns + 1, nsp + 1):
+            if ns < 0:
+                STA += initial_value**2
+            else:
+                STA += trace[ns]**2
+        STA /= Ns
+        LTA = 0
+        for nl in range(nsp - Nl + 1, nsp + 1):
+            if nl < 0:
+                LTA += initial_value**2
+            else:
+                LTA += trace[nl]**2
+        LTA /= Nl
+        ratio[nsp] = STA / LTA
+    return ratio
 
 
 def er(trace, ne, mer=False):
