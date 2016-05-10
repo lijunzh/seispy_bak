@@ -56,13 +56,13 @@ def slr(trace, Ns, Nl):
     return ratio
 
 
-def er(trace, ne, mer=False):
+@numba.jit(nopython=True)
+def er(trace, Ne):
     '''Modified energy ratio for first break detection
 
     Keyword argument:
     trace:  Input data trace
-    ne:     energy window size
-    mer:    output er or mer
+    Ne:     energy window size
 
     Returns:
     er:     Energy ratio
@@ -73,34 +73,43 @@ def er(trace, ne, mer=False):
     '''
 
     # Input check
-    if type(trace).__module__ != np.__name__:
-        raise TypeError("data must be a numpy array")
-    if len(trace.shape) != 1:
-        raise ValueError('trace is a one-dimensional array')
-    if not isinstance(ne, (int, float)):
-        raise TypeError("ne must be a number")
-    if ne <= 0:
-        raise ValueError("ne must be a possitive number")
-    if ne >= len(trace):
-        raise ValueError("ne must be less than length of trace")
+    # if type(trace).__module__ != np.__name__:
+    #     raise TypeError("data must be a numpy array")
+    # if len(trace.shape) != 1:
+    #     raise ValueError('trace is a one-dimensional array')
+    # if not isinstance(ne, (int, float)):
+    #     raise TypeError("ne must be a number")
+    # if ne <= 0:
+    #     raise ValueError("ne must be a possitive number")
+    # if ne >= len(trace):
+    #     raise ValueError("ne must be less than length of trace")
 
     Nsp = len(trace)    # number of sample points in trace
     # Extend trace(both head and tail)
-    trace_ext = np.hstack((trace,
-                           np.mean(trace[-3:-1]) * np.ones(ne - 1),
-                           np.mean(trace[:2]) * np.ones(ne - 1)))
+    # trace_ext = np.hstack((trace,
+    #                        np.mean(trace[-3:-1]) * np.ones(ne - 1),
+    #                        np.mean(trace[:2]) * np.ones(ne - 1)))
 
+    initial_value = (trace[0] + trace[1]) / 2
+    end_value = (trace[-2] + trace[-1]) / 2
     # Energy ratio
-    er = np.zeros(Nsp)
+    ratio = np.zeros(Nsp)
     for nsp in range(Nsp):
-        er[nsp] = np.sum(trace_ext[range(nsp, nsp + ne)]**2) /\
-            np.sum(trace_ext[range(nsp - ne + 1, nsp + 1)]**2)
+        E1 = 0
+        for ne in range(nsp, nsp + Ne):
+            if ne >= Nsp:
+                E1 += end_value**2
+            else:
+                E1 += trace[ne]**2
+        E2 = 0
+        for ne in range(nsp - Ne + 1, nsp):
+            if ne < 0:
+                E2 += initial_value**2
+            else:
+                E2 += trace[ne]**2
+        ratio[nsp] = E1 / E2
 
-    if mer:
-        er3 = np.power((np.abs(trace) * er), 3)
-        return er3
-    else:
-        return er
+    return ratio
 
 
 def rolling_window(a, window, step=1):
