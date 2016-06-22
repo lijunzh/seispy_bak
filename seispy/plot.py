@@ -83,6 +83,8 @@ def wiggle_input_check(data, tt, xx, sf, verbose):
             raise ValueError("tt must be a 1D array")
         if tt.shape[0] != data.shape[0]:
             raise ValueError("tt must have same as data's rows")
+        if verbose:
+            print(xx)
 
     # Input check for streth factor (sf)
     if not isinstance(sf, (int, float)):
@@ -93,7 +95,7 @@ def wiggle_input_check(data, tt, xx, sf, verbose):
 
     # Rescale data by trace_spacing and strech_factor
     data_max_std = np.max(np.std(data, axis=0))
-    data = data / data_max_std / ts * sf
+    data = data / data_max_std * ts * sf
 
     return data, tt, xx, ts
 
@@ -139,14 +141,18 @@ def wiggle(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
         trace = data[:, ntr]
         offset = xx[ntr]
 
+        if verbose:
+            print(offset)
+
         trace_zi, tt_zi = insert_zeros(trace, tt)
         ax.fill_betweenx(tt_zi, offset, trace_zi + offset,
                          where=trace_zi >= 0,
                          facecolor=color)
         ax.plot(trace_zi + offset, tt_zi, color)
 
-    ax.invert_yaxis()
     ax.set_xlim(xx[0] - ts, xx[-1] + ts)
+    ax.set_ylim(tt[0], tt[-1])
+    ax.invert_yaxis()
 
 
 def traces(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
