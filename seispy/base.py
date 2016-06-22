@@ -1,7 +1,9 @@
 '''Core module for Lijun's seismic toolbox'''
 import numpy as np
 
+
 __all__ = ['ricker']
+
 
 def ricker(f=10, len=0.5, dt=0.002, peak_loc=0.25):
     '''Generate ricker wavelet signal for seismic simulation:
@@ -23,6 +25,7 @@ def ricker(f=10, len=0.5, dt=0.002, peak_loc=0.25):
     t_out = t + peak_loc    # time shift ricker wavelet based on peak_loc
     y = (1 - 2 * np.pi**2 * f**2 * t**2) * np.exp(-np.pi**2 * f**2 * t**2)
     return t_out, y
+
 
 if __name__ == '__main__':
     pass
