@@ -1,4 +1,8 @@
-# backup files
+# Dropbox
+.dropbox
+Icon?
+
+# Backup files
 bak
 
 # Byte-compiled /optimized / DLL files
