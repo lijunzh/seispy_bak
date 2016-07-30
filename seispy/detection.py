@@ -2,8 +2,6 @@
 import numpy as np
 import numba
 
-__all__ = ['slr', 'er', 'eps', 'cm', 'em', 'fdm', 'pai_k', 'slr_kurt', 'aic']
-
 
 @numba.jit(nopython=True)
 def slr(trace, Ns, Nl):

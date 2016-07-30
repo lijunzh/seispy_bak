@@ -2,9 +2,6 @@
 import numpy as np
 
 
-__all__ = ['ricker']
-
-
 def ricker(f=10, len=0.5, dt=0.002, peak_loc=0.25):
     '''Generate ricker wavelet signal for seismic simulation:
 
