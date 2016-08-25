@@ -155,7 +155,7 @@ def wiggle(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
     ax.invert_yaxis()
 
 
-def traces(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
+def traces(data, tt=None, xx=None, color='k', sf=0.15, verbose=False, shade=False):
     '''Plot large seismic dataset in real time using pyqtgraph
 
     '''
@@ -175,27 +175,31 @@ def traces(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
         trace = data[:, ntr]
         offset = xx[ntr]
 
-        # Insert zeros
-        trace_zi, tt_zi = insert_zeros(trace, tt)
-        # Seperate top and bottom line
-        trace_top = np.array(
-            [i + offset if i >= 0 else None for i in trace_zi],
-            dtype='float64')
-        trace_line = np.array(
-            [offset if i >= 0 else None for i in trace_zi],
-            dtype='float64')
-        trace_bot = np.array(
-            [i + offset if i <= 0 else None for i in trace_zi],
-            dtype='float64')
-        # Plot top and bottom
-        top = p.plot(x=trace_top, y=tt_zi, pen=color)
-        bot = p.plot(x=trace_line, y=tt_zi, pen=color)
-        p.plot(x=trace_bot, y=tt_zi, pen=color)
-        fill = pg.FillBetweenItem(bot, top, brush=color)
-        p.addItem(fill)
+        if shade:
+            # Insert zeros
+            trace_zi, tt_zi = insert_zeros(trace, tt)
+            # Seperate top and bottom line
+            trace_top = np.array(
+                [i + offset if i >= 0 else None for i in trace_zi],
+                dtype='float64')
+            trace_line = np.array(
+                [offset if i >= 0 else None for i in trace_zi],
+                dtype='float64')
+            trace_bot = np.array(
+                [i + offset if i <= 0 else None for i in trace_zi],
+                dtype='float64')
+            # Plot top and bottom
+            top = p.plot(x=trace_top, y=tt_zi, pen=color)
+            bot = p.plot(x=trace_line, y=tt_zi, pen=color)
+            p.plot(x=trace_bot, y=tt_zi, pen=color)
+            fill = pg.FillBetweenItem(bot, top, brush=color)
+            p.addItem(fill)
+        else:
+            p.plot(x=trace+offset, y=tt, pen=color)
 
+    p.showGrid(x=True, y=True, alpha=0.3)
     p.invertY(True)
-    p.setRange(yRange=[0, np.max(tt)], padding=0)
+    p.setRange(yRange=[np.min(tt), np.max(tt)], padding=0)
 
     return p
 
@@ -208,4 +212,6 @@ def show():
 
 
 if __name__ == '__main__':
-    pass
+    data = np.random.randn(1000, 100)
+    traces(data)
+    show()
