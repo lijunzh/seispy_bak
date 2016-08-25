@@ -1,6 +1,7 @@
 # Dropbox
 .dropbox
 Icon?
+.idea/
 
 # Backup files
 bak
