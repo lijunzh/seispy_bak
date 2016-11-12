@@ -42,7 +42,7 @@ def ricker(f=10, len=0.5, dt=0.002, peak_loc=0.25):
         argument
 
     References:
-        http://google.github.io/styleguide/pyguide.html
+        http://subsurfwiki.org/wiki/Ricker_wavelet
 
     """
 
