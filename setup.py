@@ -15,6 +15,7 @@ requirements = [
     "matplotlib",
     "pyqtgraph",
     "numba",
+    "h5py",
 ]
 
 test_requirements = [
@@ -31,6 +32,7 @@ setup(
     url='https://github.com/gatechzhu/seispy',
     packages=[
         'seispy',
+        'seispy/io',
     ],
     package_dir={'seispy':
                  'seispy'},
