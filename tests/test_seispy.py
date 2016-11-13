@@ -13,6 +13,8 @@ import pytest
 
 from seispy import core
 from seispy import plot
+from seispy import detection
+from seispy import io
 
 
 @pytest.fixture

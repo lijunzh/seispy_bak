@@ -19,6 +19,14 @@ seispy.core module
     :undoc-members:
     :show-inheritance:
 
+seispy.detection module
+-----------------------
+
+.. automodule:: seispy.detection
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 seispy.plot module
 ------------------
 
