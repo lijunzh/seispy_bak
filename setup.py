@@ -14,6 +14,7 @@ requirements = [
     "numpy",
     "matplotlib",
     "pyqtgraph",
+    "numba",
 ]
 
 test_requirements = [
