@@ -1,6 +1,5 @@
-''' Lijun Zhu's personal seismic processing Python toolbox'''
+# -*- coding: utf-8 -*-
 
-from . import core
-from . import plot
-from . import detection
-from . import io
+__author__ = """Lijun Zhu"""
+__email__ = 'gatechzhu@gmail.com'
+__version__ = '0.1.0'

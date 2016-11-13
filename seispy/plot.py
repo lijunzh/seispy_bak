@@ -1,4 +1,10 @@
-'''plot module for Lijun's personal toolbox for seismic processing'''
+# -*- coding: utf-8 -*-
+
+"""Plot module for Seispy Toolbox
+
+"""
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pyqtgraph as pg
@@ -8,9 +14,10 @@ __all__ = ['wiggle', 'traces', 'show']
 
 
 def insert_zeros(trace, tt=None):
-    ''' Insert zero locations in data trace and tt vector based on linear fit
+    """Insert zero locations in data trace and tt vector based on linear fit
 
-    '''
+    """
+
 
     if tt is None:
         tt = np.arange(len(trace))
@@ -41,9 +48,10 @@ def insert_zeros(trace, tt=None):
 
 
 def wiggle_input_check(data, tt, xx, sf, verbose):
-    ''' Helper function for wiggle() and traces() to check input
+    """Helper function for wiggle() and traces() to check input
 
-    '''
+    """
+
 
     # Input check for verbose
     if not isinstance(verbose, bool):
@@ -101,7 +109,7 @@ def wiggle_input_check(data, tt, xx, sf, verbose):
 
 
 def wiggle(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
-    '''Wiggle plot of a sesimic data section
+    """Wiggle plot of a sesimic data section
 
     Syntax examples:
         wiggle(data)
@@ -128,7 +136,7 @@ def wiggle(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
     ==========  ========
 
 
-    '''
+    """
 
     # Input check
     data, tt, xx, ts = wiggle_input_check(data, tt, xx, sf, verbose)
@@ -156,9 +164,9 @@ def wiggle(data, tt=None, xx=None, color='k', sf=0.15, verbose=False):
 
 
 def traces(data, tt=None, xx=None, color='k', sf=0.15, verbose=False, shade=False):
-    '''Plot large seismic dataset in real time using pyqtgraph
+    """Plot large seismic dataset in real time using pyqtgraph
 
-    '''
+    """
 
     # Input check
     data, tt, xx, ts = wiggle_input_check(data, tt, xx, sf, verbose)
@@ -205,9 +213,9 @@ def traces(data, tt=None, xx=None, color='k', sf=0.15, verbose=False, shade=Fals
 
 
 def show():
-    '''Helper function to show pyqtgraph figres
+    """Helper function to show pyqtgraph figures
 
-    '''
+    """
     QtGui.QApplication.instance().exec_()
 
 

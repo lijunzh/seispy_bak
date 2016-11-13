@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 """Core module for Seispy toolbox
 
 This is the core module of Seispy toolbox. Inside this module, only commonly
@@ -14,6 +15,8 @@ Todo:
     *
 """
 import numpy as np
+
+__all__ = ['ricker']
 
 
 def ricker(f=10, len=0.5, dt=0.002, peak_loc=0.25):
@@ -62,3 +65,4 @@ def ricker(f=10, len=0.5, dt=0.002, peak_loc=0.25):
 
 if __name__ == '__main__':
     pass
+
